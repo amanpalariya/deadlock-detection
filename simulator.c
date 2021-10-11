@@ -167,6 +167,12 @@ void* deadlock_detection_thread(void* args) {
         }
         if (is_deadlocked) {
             log_info("DEADLOCK PRESENT");
+            for (int i = 0; i < state->m; i++) {
+                if (is_thread_deadlocked[i]) {
+                    printf("%d ", i);
+                }
+            }
+            printf("\n");
         } else {
             log_info("NO DEADLOCK");
         }

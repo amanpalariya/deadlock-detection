@@ -5,12 +5,8 @@
 
 #include "ds.h"
 
-bool* get_all_true_bool_array(int length) {
-    bool* array = (bool*)malloc(sizeof(bool) * length);
-    for (int i = 0; i < length; i++) {
-        array[i] = true;
-    }
-    return array;
+bool* get_bool_array(int length) {
+    return (bool*)malloc(sizeof(bool) * length);
 }
 
 bool can_thread_be_completed(struct minimal_resource_state* state, int thread_index) {
@@ -18,6 +14,13 @@ bool can_thread_be_completed(struct minimal_resource_state* state, int thread_in
         if (state->request[thread_index][i] > state->available[i]) return false;
     }
     return true;
+}
+
+bool is_allocation_nonzero(struct minimal_resource_state* state, int thread_index) {
+    for (int i = 0; i < state->n; i++) {
+        if (state->allocation[thread_index][i] != 0) return true;
+    }
+    return false;
 }
 
 void deallocate_thread(struct minimal_resource_state* state, int thread_index) {
@@ -51,7 +54,10 @@ bool* get_threads_involved_in_deadlock(struct minimal_resource_state* state) {
         printf("%d ", state->available[j]);
     }
     printf("\n");
-    bool* marked = get_all_true_bool_array(state->m);
+    bool* marked = get_bool_array(state->m);
+    for (int i = 0; i < state->m; i++) {
+        marked[i] = is_allocation_nonzero(state, i);
+    }
     bool progress = true;
     while (progress) {
         progress = false;

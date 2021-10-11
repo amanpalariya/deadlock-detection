@@ -9,7 +9,7 @@
 int main(int argc, char** argv) {
     int n = 4;
     int total_resources[4] = {1, 2, 1, 2};
-    int m = 2;
+    int m = 10;
     int d = 1000000;
     struct resource_state* state = get_new_empty_resource_state(n, m);
     for (int i = 0; i < n; i++) {
