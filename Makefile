@@ -1,5 +1,5 @@
---dependencies = logger.c
---libraries = 
+--dependencies = logger.c ds.c deadlock_detector.c simulator.c
+--libraries = -lpthread
 --build-dir = build
 --main-file = main.c
 --output-filename = main.out
