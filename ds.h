@@ -5,6 +5,15 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+enum preemption_heuristic {
+    MAX_TOTAL_ALLOCATION,
+    MIN_TOTAL_ALLOCATION,
+    MAX_MAX_ALLOCATION,
+    MIN_MIN_ALLOCATION,
+    MAX_NUMBER_OF_ALLOCATION,
+    MIN_NUMBER_OF_ALLOCATION,
+};
+
 struct resource_state {
     int n;             // [READ ONLY] Number of types of resources
     int m;             // [READ ONLY] Number of threads

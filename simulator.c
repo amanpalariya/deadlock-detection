@@ -6,6 +6,14 @@
 #include "ds.h"
 #include "logger.h"
 
+int max(int a, int b) {
+    return a > b ? a : b;
+}
+
+int min(int a, int b) {
+    return a < b ? a : b;
+}
+
 struct run_thread_args {
     struct resource_state* state;
     int thread_index;
@@ -15,6 +23,7 @@ struct run_thread_args {
 struct deadlock_detection_thread_args {
     struct resource_state* state;
     int d;
+    enum preemption_heuristic heuristic;
 };
 
 struct run_thread_args* get_run_thread_args(struct resource_state* state, int thread_index, int d) {
@@ -25,10 +34,11 @@ struct run_thread_args* get_run_thread_args(struct resource_state* state, int th
     return args;
 }
 
-struct deadlock_detection_thread_args* get_deadlock_detection_thread_args(struct resource_state* state, int d) {
+struct deadlock_detection_thread_args* get_deadlock_detection_thread_args(struct resource_state* state, int d, enum preemption_heuristic heuristic) {
     struct deadlock_detection_thread_args* args = (struct deadlock_detection_thread_args*)malloc(sizeof(struct deadlock_detection_thread_args));
     args->state = state;
     args->d = d;
+    args->heuristic = heuristic;
     return args;
 }
 
@@ -143,15 +153,184 @@ void* run_thread(void* args) {
 }
 
 void preempt_thread(struct resource_state* state, int thread_index) {
-    lock_state(state);
     state->should_terminate[thread_index] = true;
     for (int i = 0; i < state->n; i++) cond_signal(state, i);
-    unlock_state(state);
+}
+
+int total_allocation(struct resource_state* state, int thread_index) {
+    int ans = 0;
+    for (int i = 0; i < state->n; i++) {
+        ans += state->allocation[thread_index][i];
+    }
+    return ans;
+}
+
+int max_allocation(struct resource_state* state, int thread_index) {
+    int ans = 0;
+    for (int i = 0; i < state->n; i++) {
+        ans = max(ans, state->allocation[thread_index][i]);
+    }
+    return ans;
+}
+
+int min_allocation(struct resource_state* state, int thread_index) {
+    int ans = -1;
+    for (int i = 0; i < state->n; i++) {
+        int alloc = state->allocation[thread_index][i];
+        if (alloc != 0) {
+            if (ans == -1) {
+                ans = alloc;
+            } else {
+                ans = min(ans, state->allocation[thread_index][i]);
+            }
+        }
+    }
+    return ans;
+}
+
+int number_of_allocation(struct resource_state* state, int thread_index) {
+    int ans = 0;
+    for (int i = 0; i < state->n; i++) {
+        ans += state->allocation[thread_index][i] != 0;
+    }
+    return ans;
+}
+
+int max_total_allocation(struct resource_state* state, bool* is_thread_deadlocked) {
+    int ans = -1;
+    int param = -1;
+    for (int i = 0; i < state->m; i++) {
+        if (is_thread_deadlocked[i]) {
+            int param_i = total_allocation(state, i);
+            if (ans == -1) {
+                ans = i;
+                param = param_i;
+            } else if (param_i > param) {
+                ans = i;
+                param = param_i;
+            }
+        }
+    }
+    return ans;
+}
+
+int min_total_allocation(struct resource_state* state, bool* is_thread_deadlocked) {
+    int ans = -1;
+    int param = -1;
+    for (int i = 0; i < state->m; i++) {
+        if (is_thread_deadlocked[i]) {
+            int param_i = total_allocation(state, i);
+            if (ans == -1) {
+                ans = i;
+                param = param_i;
+            } else if (param_i < param) {
+                ans = i;
+                param = param_i;
+            }
+        }
+    }
+    return ans;
+}
+
+int max_max_allocation(struct resource_state* state, bool* is_thread_deadlocked) {
+    int ans = -1;
+    int param = -1;
+    for (int i = 0; i < state->m; i++) {
+        if (is_thread_deadlocked[i]) {
+            int param_i = max_allocation(state, i);
+            if (ans == -1) {
+                ans = i;
+                param = param_i;
+            } else if (param_i > param) {
+                ans = i;
+                param = param_i;
+            }
+        }
+    }
+    return ans;
+}
+
+int min_min_allocation(struct resource_state* state, bool* is_thread_deadlocked) {
+    int ans = -1;
+    int param = -1;
+    for (int i = 0; i < state->m; i++) {
+        if (is_thread_deadlocked[i]) {
+            int param_i = min_allocation(state, i);
+            if (ans == -1) {
+                ans = i;
+                param = param_i;
+            } else if (param_i < param) {
+                ans = i;
+                param = param_i;
+            }
+        }
+    }
+    return ans;
+}
+
+int max_number_of_allocation(struct resource_state* state, bool* is_thread_deadlocked) {
+    int ans = -1;
+    int param = -1;
+    for (int i = 0; i < state->m; i++) {
+        if (is_thread_deadlocked[i]) {
+            int param_i = number_of_allocation(state, i);
+            if (ans == -1) {
+                ans = i;
+                param = param_i;
+            } else if (param_i > param) {
+                ans = i;
+                param = param_i;
+            }
+        }
+    }
+    return ans;
+}
+
+int min_number_of_allocation(struct resource_state* state, bool* is_thread_deadlocked) {
+    int ans = -1;
+    int param = -1;
+    for (int i = 0; i < state->m; i++) {
+        if (is_thread_deadlocked[i]) {
+            int param_i = number_of_allocation(state, i);
+            if (ans == -1) {
+                ans = i;
+                param = param_i;
+            } else if (param_i < param) {
+                ans = i;
+                param = param_i;
+            }
+        }
+    }
+    return ans;
+}
+
+int get_thread_to_preempt(struct resource_state* state, bool* is_thread_deadlocked, enum preemption_heuristic h) {
+    switch (h) {
+        case MAX_TOTAL_ALLOCATION:
+            return max_total_allocation(state, is_thread_deadlocked);
+            break;
+        case MIN_TOTAL_ALLOCATION:
+            return min_total_allocation(state, is_thread_deadlocked);
+            break;
+        case MAX_MAX_ALLOCATION:
+            return max_max_allocation(state, is_thread_deadlocked);
+            break;
+        case MIN_MIN_ALLOCATION:
+            return min_min_allocation(state, is_thread_deadlocked);
+            break;
+        case MAX_NUMBER_OF_ALLOCATION:
+            return max_number_of_allocation(state, is_thread_deadlocked);
+            break;
+        case MIN_NUMBER_OF_ALLOCATION:
+            return min_number_of_allocation(state, is_thread_deadlocked);
+            break;
+    }
 }
 
 void* deadlock_detection_thread(void* args) {
     struct deadlock_detection_thread_args* _args = (struct deadlock_detection_thread_args*)args;
     struct resource_state* state = _args->state;
+    enum preemption_heuristic heuristic = _args->heuristic;
     int d = _args->d;
     while (true) {
         usleep(d);
@@ -173,6 +352,10 @@ void* deadlock_detection_thread(void* args) {
                 }
             }
             printf("\n");
+            // Find a thread to preempt using given heuristics
+            int thread_index_to_preempt = get_thread_to_preempt(state, is_thread_deadlocked, heuristic);
+            log_info("Preempting thread %d", thread_index_to_preempt);
+            preempt_thread(state, thread_index_to_preempt);
         } else {
             log_info("NO DEADLOCK");
         }
@@ -180,11 +363,11 @@ void* deadlock_detection_thread(void* args) {
     }
 }
 
-void run(struct resource_state* state, int d) {
+void run(struct resource_state* state, int d, enum preemption_heuristic heuristic) {
     pthread_t thread_id[state->m];
     pthread_t deadlock_detection_thread_id;
     for (int i = 0; i < state->m; i++) {
         pthread_create(&thread_id[i], NULL, run_thread, get_run_thread_args(state, i, d));
     }
-    pthread_create(&deadlock_detection_thread_id, NULL, deadlock_detection_thread, get_deadlock_detection_thread_args(state, d));
+    pthread_create(&deadlock_detection_thread_id, NULL, deadlock_detection_thread, get_deadlock_detection_thread_args(state, d, heuristic));
 }

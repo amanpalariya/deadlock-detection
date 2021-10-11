@@ -3,6 +3,6 @@
 
 #include "ds.h"
 
-void run(struct resource_state* state, int d);
+void run(struct resource_state* state, int d, enum preemption_heuristic heuristic);
 
 #endif

@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
         }
     }
     srand(time(NULL));
-    run(state, d);
+    run(state, d, MAX_NUMBER_OF_ALLOCATION);
     getc(stdin);
     return 0;
 }
