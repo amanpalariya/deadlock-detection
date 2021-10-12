@@ -5,6 +5,6 @@
 
 #include "ds.h"
 
-bool* get_threads_involved_in_deadlock(struct minimal_resource_state* state);
+bool* get_threads_involved_in_deadlock(struct minimal_resource_state* state, bool should_print);
 
 #endif

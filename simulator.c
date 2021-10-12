@@ -359,7 +359,7 @@ void* deadlock_detection_thread(void* args) {
         lock_state(state);
         stop = get_curr_time();
         log_info("DETECTING DEADLOCK...");
-        bool* is_thread_deadlocked = get_threads_involved_in_deadlock(get_copied_minimal_state(state));
+        bool* is_thread_deadlocked = get_threads_involved_in_deadlock(get_copied_minimal_state(state), true);
         bool is_deadlocked = false;
         for (int i = 0; i < state->m; i++) {
             if (is_thread_deadlocked[i]) {

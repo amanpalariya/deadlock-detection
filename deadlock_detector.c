@@ -31,29 +31,31 @@ void deallocate_thread(struct minimal_resource_state* state, int thread_index) {
     }
 }
 
-bool* get_threads_involved_in_deadlock(struct minimal_resource_state* state) {
-    printf("Request");
-    printf("\n");
-    for (int i = 0; i < state->m; i++) {
+bool* get_threads_involved_in_deadlock(struct minimal_resource_state* state, bool should_print) {
+    if (should_print) {
+        printf("Request");
+        printf("\n");
+        for (int i = 0; i < state->m; i++) {
+            for (int j = 0; j < state->n; j++) {
+                printf("%d ", state->request[i][j]);
+            }
+            printf("\n");
+        }
+        printf("Allocation");
+        printf("\n");
+        for (int i = 0; i < state->m; i++) {
+            for (int j = 0; j < state->n; j++) {
+                printf("%d ", state->allocation[i][j]);
+            }
+            printf("\n");
+        }
+        printf("Available");
+        printf("\n");
         for (int j = 0; j < state->n; j++) {
-            printf("%d ", state->request[i][j]);
+            printf("%d ", state->available[j]);
         }
         printf("\n");
     }
-    printf("Allocation");
-    printf("\n");
-    for (int i = 0; i < state->m; i++) {
-        for (int j = 0; j < state->n; j++) {
-            printf("%d ", state->allocation[i][j]);
-        }
-        printf("\n");
-    }
-    printf("Available");
-    printf("\n");
-    for (int j = 0; j < state->n; j++) {
-        printf("%d ", state->available[j]);
-    }
-    printf("\n");
     bool* marked = get_bool_array(state->m);
     for (int i = 0; i < state->m; i++) {
         marked[i] = is_allocation_nonzero(state, i);
