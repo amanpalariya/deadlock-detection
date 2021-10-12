@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include <stdbool.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 #include "deadlock_detector.h"
@@ -24,6 +25,8 @@ struct deadlock_detection_thread_args {
     struct resource_state* state;
     int d;
     enum preemption_heuristic heuristic;
+    long* time_diff_in_micros;
+    int* number_of_deadlocks;
 };
 
 struct run_thread_args* get_run_thread_args(struct resource_state* state, int thread_index, int d) {
@@ -34,11 +37,13 @@ struct run_thread_args* get_run_thread_args(struct resource_state* state, int th
     return args;
 }
 
-struct deadlock_detection_thread_args* get_deadlock_detection_thread_args(struct resource_state* state, int d, enum preemption_heuristic heuristic) {
+struct deadlock_detection_thread_args* get_deadlock_detection_thread_args(struct resource_state* state, int d, enum preemption_heuristic heuristic, long* time_diff_in_micros, int* number_of_deadlocks) {
     struct deadlock_detection_thread_args* args = (struct deadlock_detection_thread_args*)malloc(sizeof(struct deadlock_detection_thread_args));
     args->state = state;
     args->d = d;
     args->heuristic = heuristic;
+    args->time_diff_in_micros = time_diff_in_micros;
+    args->number_of_deadlocks = number_of_deadlocks;
     return args;
 }
 
@@ -86,7 +91,8 @@ bool claim_resources(struct resource_state* state, int thread_index, int resourc
     if (state->available[resource_index] >= state->request[thread_index][resource_index]) {
         curr_allocation = state->request[thread_index][resource_index];
     } else {
-        curr_allocation = state->available[resource_index];
+        // curr_allocation = state->available[resource_index]; // Uncomment this line to allocate partial requests
+        curr_allocation = 0;
     }
     allocate_from_request(state, thread_index, resource_index, curr_allocation);
     return state->request[thread_index][resource_index] == 0;
@@ -119,10 +125,12 @@ void* run_thread(void* args) {
         log_info("[%d] Deciding requirement", thread_index);
         int* requirement = generate_random_requirement(state->n, state->resource);
         int required_resources = number_of_required_resources(requirement, state->n);
+        lock_state(state);
         log_info("[%d] Printing requirement", thread_index);
         for (int i = 0; i < state->n; i++) {
             log_info("[%d] Res [%d] = %d", thread_index, i, requirement[i]);
         }
+        unlock_state(state);
         while (required_resources > 0 && !should_terminate(state, thread_index)) {
             if (randint(0, 2) == 0) {
                 log_info("[%d] Sleeping", thread_index);
@@ -304,8 +312,8 @@ int min_number_of_allocation(struct resource_state* state, bool* is_thread_deadl
     return ans;
 }
 
-int get_thread_to_preempt(struct resource_state* state, bool* is_thread_deadlocked, enum preemption_heuristic h) {
-    switch (h) {
+int get_thread_to_preempt(struct resource_state* state, bool* is_thread_deadlocked, enum preemption_heuristic heuristic) {
+    switch (heuristic) {
         case MAX_TOTAL_ALLOCATION:
             return max_total_allocation(state, is_thread_deadlocked);
             break;
@@ -327,14 +335,29 @@ int get_thread_to_preempt(struct resource_state* state, bool* is_thread_deadlock
     }
 }
 
+struct timeval get_curr_time() {
+    struct timeval t;
+    gettimeofday(&t, NULL);
+    return t;
+}
+
+long get_time_diff_in_millis(struct timeval start, struct timeval end) {
+    return (end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec;
+}
+
 void* deadlock_detection_thread(void* args) {
     struct deadlock_detection_thread_args* _args = (struct deadlock_detection_thread_args*)args;
     struct resource_state* state = _args->state;
     enum preemption_heuristic heuristic = _args->heuristic;
+    long* time_diff_in_micros = _args->time_diff_in_micros;
+    int* number_of_deadlocks = _args->number_of_deadlocks;
     int d = _args->d;
+    struct timeval start, stop;
+    start = get_curr_time();
     while (true) {
         usleep(d);
         lock_state(state);
+        stop = get_curr_time();
         log_info("DETECTING DEADLOCK...");
         bool* is_thread_deadlocked = get_threads_involved_in_deadlock(get_copied_minimal_state(state));
         bool is_deadlocked = false;
@@ -356,6 +379,10 @@ void* deadlock_detection_thread(void* args) {
             int thread_index_to_preempt = get_thread_to_preempt(state, is_thread_deadlocked, heuristic);
             log_info("Preempting thread %d", thread_index_to_preempt);
             preempt_thread(state, thread_index_to_preempt);
+
+            *time_diff_in_micros += get_time_diff_in_millis(start, stop);
+            *number_of_deadlocks += 1;
+            start = get_curr_time();
         } else {
             log_info("NO DEADLOCK");
         }
@@ -363,11 +390,12 @@ void* deadlock_detection_thread(void* args) {
     }
 }
 
-void run(struct resource_state* state, int d, enum preemption_heuristic heuristic) {
+void run(struct resource_state* state, int d, enum preemption_heuristic heuristic, long* time_diff_in_micros, int* number_of_deadlocks) {
     pthread_t thread_id[state->m];
     pthread_t deadlock_detection_thread_id;
     for (int i = 0; i < state->m; i++) {
         pthread_create(&thread_id[i], NULL, run_thread, get_run_thread_args(state, i, d));
     }
-    pthread_create(&deadlock_detection_thread_id, NULL, deadlock_detection_thread, get_deadlock_detection_thread_args(state, d, heuristic));
+    pthread_create(&deadlock_detection_thread_id, NULL, deadlock_detection_thread, get_deadlock_detection_thread_args(state, d, heuristic, time_diff_in_micros, number_of_deadlocks));
+    // pthread_join(deadlock_detection_thread_id, NULL);
 }
