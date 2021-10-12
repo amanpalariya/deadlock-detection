@@ -70,5 +70,6 @@ bool* get_threads_involved_in_deadlock(struct minimal_resource_state* state) {
             }
         }
     }
+    free_minimal_state(state);
     return marked;
 }

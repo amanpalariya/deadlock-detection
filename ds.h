@@ -53,4 +53,8 @@ void unlock_state(struct resource_state* state);
 
 struct minimal_resource_state* get_copied_minimal_state(struct resource_state* state);
 
+void free_state(struct resource_state* state);
+
+void free_minimal_state(struct minimal_resource_state* state);
+
 #endif

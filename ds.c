@@ -84,3 +84,25 @@ struct minimal_resource_state* get_copied_minimal_state(struct resource_state* s
     }
     return copy;
 }
+
+void free_state(struct resource_state* state) {
+    for (int i = 0; i < state->m; i++) {
+        free(state->request[i]);
+        free(state->allocation[i]);
+    }
+    free(state->resource);
+    free(state->available);
+    free(state->condition);
+    free(state->should_terminate);
+    free(state);
+}
+
+void free_minimal_state(struct minimal_resource_state* state) {
+    for (int i = 0; i < state->m; i++) {
+        free(state->request[i]);
+        free(state->allocation[i]);
+    }
+    free(state->resource);
+    free(state->available);
+    free(state);
+}

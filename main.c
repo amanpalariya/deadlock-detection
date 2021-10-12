@@ -81,5 +81,6 @@ int main(int argc, char** argv) {
     run(state, d * 1000, heuristic, &time_diff_in_micros, &number_of_deadlocks);
     while (getc(stdin) != EOF)
         ;
+    free_state(state);
     return 0;
 }
