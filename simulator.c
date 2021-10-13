@@ -133,8 +133,9 @@ void* run_thread(void* args) {
         unlock_state(state);
         while (required_resources > 0 && !should_terminate(state, thread_index)) {
             if (randint(0, 2) == 0) {
-                log_info("[%d] Sleeping", thread_index);
-                usleep(randint(10000, 1000000));
+                int sleep_time = randint(10000, 1000000);
+                log_info("[%d] Sleeping for %.2f", thread_index, sleep_time / 1000.0f);
+                usleep(sleep_time);
                 continue;
             }
             // Generate random request
@@ -155,7 +156,7 @@ void* run_thread(void* args) {
         log_info("[%d] Freeing all resources", thread_index);
         free_all_resources(state, thread_index);
         int time = randint((int)(0.7f * d), (int)(1.5f * d));
-        log_info("[%d] Sleeping for %d", thread_index, time);
+        log_info("[%d] Sleeping for %.2f", thread_index, time / 1000.0f);
         usleep(time);
     }
 }
@@ -386,6 +387,7 @@ void* deadlock_detection_thread(void* args) {
         } else {
             log_info("NO DEADLOCK");
         }
+        for (int i = 0; i < state->n; i++) cond_signal(state, i);
         unlock_state(state);
     }
 }

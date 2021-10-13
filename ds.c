@@ -61,7 +61,7 @@ void cond_wait(struct resource_state* state, int resource_index) {
 }
 
 void cond_signal(struct resource_state* state, int resource_index) {
-    pthread_cond_signal(&state->condition[resource_index]);
+    pthread_cond_broadcast(&state->condition[resource_index]);
 }
 
 void lock_state(struct resource_state* state) {
