@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
         }
     }
     srand(time(NULL));
-    printf("Starting simulation with following configuration\n");
+    printf("Starting simulation with the following configuration\n");
     printf("Resources: %d [", state->n);
     int i = 0;
     for (; i < (state->n - 1); i++) {
@@ -68,11 +68,11 @@ int main(int argc, char** argv) {
         case MIN_MIN_ALLOCATION:
             printf("Min min allocation");
             break;
-        case MAX_NUMBER_OF_ALLOCATION:
-            printf("Max number of allocation");
+        case MAX_DISTINCT_ALLOCATION:
+            printf("Max distinct allocation");
             break;
-        case MIN_NUMBER_OF_ALLOCATION:
-            printf("Min number of allocation");
+        case MIN_DISTINCT_ALLOCATION:
+            printf("Min distinct allocation");
             break;
     }
     printf("\n");

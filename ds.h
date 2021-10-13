@@ -10,8 +10,8 @@ enum preemption_heuristic {
     MIN_TOTAL_ALLOCATION = 1,
     MAX_MAX_ALLOCATION = 2,
     MIN_MIN_ALLOCATION = 3,
-    MAX_NUMBER_OF_ALLOCATION = 4,
-    MIN_NUMBER_OF_ALLOCATION = 5,
+    MAX_DISTINCT_ALLOCATION = 4,
+    MIN_DISTINCT_ALLOCATION = 5,
 };
 
 struct resource_state {

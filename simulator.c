@@ -327,10 +327,10 @@ int get_thread_to_preempt(struct resource_state* state, bool* is_thread_deadlock
         case MIN_MIN_ALLOCATION:
             return min_min_allocation(state, is_thread_deadlocked);
             break;
-        case MAX_NUMBER_OF_ALLOCATION:
+        case MAX_DISTINCT_ALLOCATION:
             return max_number_of_allocation(state, is_thread_deadlocked);
             break;
-        case MIN_NUMBER_OF_ALLOCATION:
+        case MIN_DISTINCT_ALLOCATION:
             return min_number_of_allocation(state, is_thread_deadlocked);
             break;
     }
