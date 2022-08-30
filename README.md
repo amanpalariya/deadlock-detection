@@ -44,7 +44,7 @@ After doing the following steps
 3. Press Ctrl+D when you want to finish execution 
 
 A possible output can be the following
----
+```
 Starting simulation with following configuration
 Resources: 3 [4, 4, 4]
 Number of threads: 4
@@ -709,4 +709,4 @@ INFO  08:45:32: NO DEADLOCK
 Detected deadlocks 1 times
 Average deadlock interval: 9005.21 ms
 
----
+```
