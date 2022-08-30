@@ -342,7 +342,7 @@ struct timeval get_curr_time() {
     return t;
 }
 
-long get_time_diff_in_millis(struct timeval start, struct timeval end) {
+long get_time_diff_in_micros(struct timeval start, struct timeval end) {
     return (end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec;
 }
 
@@ -381,7 +381,7 @@ void* deadlock_detection_thread(void* args) {
             log_info("Preempting thread %d", thread_index_to_preempt);
             preempt_thread(state, thread_index_to_preempt);
 
-            *time_diff_in_micros += get_time_diff_in_millis(start, stop);
+            *time_diff_in_micros += get_time_diff_in_micros(start, stop);
             *number_of_deadlocks += 1;
             start = get_curr_time();
         } else {
