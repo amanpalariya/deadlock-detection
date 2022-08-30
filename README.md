@@ -1,7 +1,3 @@
-Submitter name: Aman Palariya
-Roll No: 2019CSB1068
-Course: CS303
-
 # What does the program do?
 
 It simulates resource requests from threads and checks for detection and preempts the threads based on some heuristics.
